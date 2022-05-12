@@ -1,6 +1,6 @@
 # Lab for Object-oriented programming course
 
-## Fitst lractice project
+## Fitst practice project
 
 ### Task
 
