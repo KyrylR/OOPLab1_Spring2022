@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DataSourceConfig {
     /*  Database credentials */
-    static final String DB_URL = "jdbc:postgresql://localhost:5432/FacultyOOPLabs";
+    static final String DB_URL = "jdbc:postgresql://localhost:5432/Autobase";
     static final String USER = "postgres";
     static final String PASS = "password";
 
