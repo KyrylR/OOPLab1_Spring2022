@@ -56,7 +56,7 @@ public class RegistrationEventListenerProvider implements EventListenerProvider 
                 System.out.println(e.fillInStackTrace().getMessage());
             }
 
-            System.out.println("Hello, am I alive? Am I? (•_•) ( •_•)>⌐■-■ (⌐■_■) -> " + newRegisteredUser.getUsername());
+            System.out.println("Hello, am I alive? Am I? (._.) ( l: ) ( .-. ) ( :l ) (._.) -> " + newRegisteredUser.getUsername());
         }
 
     }
