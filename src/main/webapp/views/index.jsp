@@ -66,7 +66,7 @@
 
     <a href="/cars" class="nav__link" data-link>Cars</a>
     <a href="/drivers" class="nav__link" data-link>Drivers</a>
-    <a href="/car-drivers" class="nav__link" data-link>Car-Drivers</a>
+    <a href="/carDriver" class="nav__link" data-link>Car-Drivers</a>
     <a href="/bids" class="nav__link" data-link>Bids</a>
     <a href="/logout" class="nav__link" data-link>Logout</a>
 
@@ -75,7 +75,22 @@
 </nav>
 
 <div id="app">
+    <%! Set<String> rolesSet = null; %>
 
+    <%
+        if (request.getAttribute("roles") != null) {
+            rolesSet = (Set<String>) request.getAttribute("roles");
+        }
+    %>
+
+    <% if (request.getAttribute("info") != null) { %>
+    <%= request.getAttribute("info") %>
+
+    <%@include file="modelViews/Bids.jsp" %>
+    <%@include file="modelViews/Car-Driver.jsp" %>
+    <%@include file="modelViews/Cars.jsp" %>
+    <%@include file="modelViews/Drivers.jsp" %>
+    <% } %>
 </div>
 
 </body>
