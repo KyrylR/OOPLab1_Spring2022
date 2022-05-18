@@ -40,13 +40,13 @@ public class RegistrationEventListenerProvider implements EventListenerProvider 
 
 
                 if (Objects.equals(ourRole, "[manager]")) {
-                    RoleModel roleModel = realm.getClientById(realm.getClientByClientId("autobase").getId()).getRole("manager");
+                    RoleModel roleModel = realm.getClientById(realm.getClientByClientId("spring-boot-client").getId()).getRole("ROLE_MANAGER");
                     System.out.println("Our Role model: " + roleModel.getName());
                     newRegisteredUser.grantRole(roleModel);
                 }
 
                 if (Objects.equals(ourRole, "[driver]")) {
-                    RoleModel roleModel = realm.getClientById(realm.getClientByClientId("autobase").getId()).getRole("driver");
+                    RoleModel roleModel = realm.getClientById(realm.getClientByClientId("spring-boot-client").getId()).getRole("ROLE_DRIVER");
                     System.out.println("Our Role model: " + roleModel.getName());
                     newRegisteredUser.grantRole(roleModel);
 
