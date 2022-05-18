@@ -6,7 +6,7 @@ import org.keycloak.events.EventListenerProvider;
 import org.keycloak.events.EventType;
 import org.keycloak.events.admin.AdminEvent;
 import org.keycloak.models.*;
-import ua.univ.DAO.AutobaseDAO;
+import ua.univ.DAO.DriverDAO;
 import ua.univ.models.Driver;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -33,10 +33,10 @@ public class RegistrationEventListenerProvider implements EventListenerProvider 
             MultivaluedMap<String, String> formParameters = req.getFormParameters();
 
             String ourRole = formParameters.get("role").toString();
-            AutobaseDAO autobaseDAO;
+            DriverDAO driver;
 
             try {
-                autobaseDAO = new AutobaseDAO();
+                driver = new DriverDAO();
 
 
                 if (Objects.equals(ourRole, "[manager]")) {
@@ -50,7 +50,7 @@ public class RegistrationEventListenerProvider implements EventListenerProvider 
                     System.out.println("Our Role model: " + roleModel.getName());
                     newRegisteredUser.grantRole(roleModel);
 
-                    autobaseDAO.saveDriver(new Driver(-1, newRegisteredUser.getFirstName()));
+                    driver.saveDriver(new Driver(-1, newRegisteredUser.getFirstName()));
                 }
             } catch (ClassNotFoundException | SQLException e) {
                 System.out.println(e.fillInStackTrace().getMessage());

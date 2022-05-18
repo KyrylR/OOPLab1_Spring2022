@@ -1,23 +1,21 @@
 package ua.univ.controllers;
 
-import org.keycloak.representations.AccessToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ua.univ.models.Bid;
 import ua.univ.service.BidService;
-import ua.univ.utils.KeycloakTokenUtil;
-import ua.univ.utils.Utils;
+import ua.univ.utils.ServletUtils;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
-import java.util.Set;
 
-@WebServlet("/bids")
+@WebServlet("/api/bids/*")
 public class BidController extends HttpServlet {
     private BidService service;
 
@@ -31,80 +29,105 @@ public class BidController extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        request.setAttribute("username", KeycloakTokenUtil.getPreferredUsername(request));
-        Set<String> roles = KeycloakTokenUtil.getRoles(request);
-        AccessToken accessToken = KeycloakTokenUtil.getToken(request);
-        request.setAttribute("roles", KeycloakTokenUtil.getRoles(request));
+//        request.setAttribute("username", KeycloakTokenUtil.getPreferredUsername(request));
+//        request.setAttribute("roles", KeycloakTokenUtil.getRoles(request));
+        try {
+            PrintWriter out = response.getWriter();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            String data = "";
 
-        StringBuilder stringBuilder = new StringBuilder();
-
-        if (request.getParameter("id") == null) {
-            if (roles.contains("admin") || roles.contains("manager")) {
-                stringBuilder.append(service.showAll());
-            } else if (roles.contains("driver")) {
-                stringBuilder.append(service.showAll(accessToken.getName()));
+            int idValue = ServletUtils.getURIId(request.getRequestURI());
+            if (idValue == -1) {
+                data = this.service.showAll();
+            } else {
+                data = service.showSingle(idValue);
             }
-        } else {
-            int bid_id = Integer.parseInt(request.getParameter("id"));
-            stringBuilder.append(service.showSingle(bid_id));
 
-            Bid bid = service.getBid(bid_id);
-
-            request.setAttribute("finished", String.valueOf(bid.isFinished()));
-            request.setAttribute("feedback", String.valueOf(bid.getDriverFeedback()));
-            request.setAttribute("delete_id", bid_id);
+            out.print(data);
+            out.flush();
+        } catch (Exception exception) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-
-        request.setAttribute("driverList", this.service.getAllDrivers());
-        request.setAttribute("objectName", "Bid");
-
-        request.setAttribute("info", stringBuilder);
-
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/views/index.jsp");
-        requestDispatcher.forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        String action = req.getParameter("btn_action");
-        switch (action) {
-            case "Delete": {
-                int delete_id = Integer.parseInt(session.getAttribute("delete_id").toString());
-                this.service.onDelete(delete_id);
-                resp.sendRedirect("/bids");
-                break;
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            case "Add": {
-                String workPurpose = req.getParameter("name");
-                String isFinished = req.getParameter("finished");
-                String driverFeedback = req.getParameter("driverFeedback");
-                String driverId = req.getParameter("driver_id");
-                String[] params = new String[]{workPurpose, isFinished, driverFeedback, driverId};
-                this.service.onAdd(params);
-                resp.sendRedirect("/bids");
-                break;
-            }
-            case "Update": {
-                int update_id = Integer.parseInt(session.getAttribute("update_id").toString());
-                Bid bid = service.getBid(update_id);
-                String finished = (null == req.getParameter("finished") || req.getParameter("finished").equals("")) ? "false" : req.getParameter("finished");
-                String feedback = (null == req.getParameter("feedback")) ? "" : req.getParameter("feedback");
-                String[] params = new String[]{String.valueOf(bid.getId()),
-                        bid.getWorkPurpose(),
-                        finished,
-                        feedback, String.valueOf(bid.getDriver().getId())};
-                this.service.onUpdate(params);
-                resp.sendRedirect("/bids");
-                break;
-            }
-            default: {
-                System.out.println("Not implemented action!");
-            }
+
+            Bid bid = new ObjectMapper().readValue(requestBody.toString(), Bid.class);
+            String bidJsonString = this.service.addBid(bid);
+
+            out.print(bidJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-        session.invalidate();
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            this.service.onDelete(id);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
+    }
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String method = req.getMethod();
+        if (method.equals("PATCH")) {
+            doPatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
+
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            Bid bid = new ObjectMapper().readValue(requestBody.toString(), Bid.class);
+            String bidJsonString = this.service.updateBid(id, bid);
+
+            out.print(bidJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
     }
 }

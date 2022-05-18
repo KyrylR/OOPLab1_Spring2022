@@ -8,6 +8,9 @@ public class CarDriver implements IDefaultModel{
     private Car car;
     private Driver driver;
 
+    public CarDriver() {
+    }
+
     public CarDriver(int id, Car car, Driver driver) {
         this.id = id;
         this.car = car;
@@ -22,12 +25,20 @@ public class CarDriver implements IDefaultModel{
         return car;
     }
 
+    public int getCarId() {
+        return car.getId();
+    }
+
     public void setCar(Car car) {
         this.car = car;
     }
 
     public Driver getDriver() {
         return driver;
+    }
+
+    public int getDriverId() {
+        return driver.getId();
     }
 
     public void setDriver(Driver driver) {
@@ -40,12 +51,12 @@ public class CarDriver implements IDefaultModel{
     }
 
     @Override
-    public String getURLPattern() {
+    public String urlPattern() {
         return "/carDriver";
     }
 
     @Override
-    public Map<String, String> getMap() {
+    public Map<String, String> createMap() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("Id", String.valueOf(this.id));
         map.put("CarFor", this.car.getPurpose());

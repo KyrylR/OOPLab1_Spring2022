@@ -13,7 +13,7 @@ public class Utils {
     }
     public static StringBuilder getSingleModelView(IDefaultModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        Map<String, String> map = model.getMap();
+        Map<String, String> map = model.createMap();
 
         stringBuilder.append("<table  class=\"w-auto table table-bordered table-sm\">\n<tbody>\n");
 
@@ -33,7 +33,7 @@ public class Utils {
         if (models.length == 0)
             return stringBuilder;
 
-        Map<String, String> map = models[0].getMap();
+        Map<String, String> map = models[0].createMap();
         stringBuilder.append("<table  class=\"w-auto table models-table table-bordered table-hover table-sm\">\n<thead>\n<tr>\n");
 
         for (String key : map.keySet()) {
@@ -51,10 +51,10 @@ public class Utils {
 
     public static StringBuilder getRow(IDefaultModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        Map<String, String> map = model.getMap();
+        Map<String, String> map = model.createMap();
 
         stringBuilder.append("<tr onclick=\"window.location.href = '")
-                .append(model.getURLPattern()).append("?id=")
+                .append(model.urlPattern()).append("?id=")
                 .append(model.getId())
                 .append("';\">\n");
         for (String value : map.values()) {

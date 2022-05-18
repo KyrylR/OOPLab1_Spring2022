@@ -5,7 +5,7 @@ import java.util.Map;
 public interface IDefaultModel {
     int getId();
 
-    String getURLPattern();
+    String urlPattern();
 
-    Map<String, String> getMap();
+    Map<String, String> createMap();
 }

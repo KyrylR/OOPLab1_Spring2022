@@ -1,19 +1,21 @@
 package ua.univ.controllers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ua.univ.models.Car;
 import ua.univ.service.CarService;
-import ua.univ.utils.KeycloakTokenUtil;
+import ua.univ.utils.ServletUtils;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 
-@WebServlet("/cars")
+@WebServlet("/api/cars/*")
 public class CarController extends HttpServlet {
     private CarService service;
 
@@ -29,51 +31,104 @@ public class CarController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        request.setAttribute("username", KeycloakTokenUtil.getPreferredUsername(request));
-        request.setAttribute("roles", KeycloakTokenUtil.getRoles(request));
+//        request.setAttribute("username", KeycloakTokenUtil.getPreferredUsername(request));
+//        request.setAttribute("roles", KeycloakTokenUtil.getRoles(request));
+        try {
+            PrintWriter out = response.getWriter();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            String data = "";
 
-        StringBuilder stringBuilder = new StringBuilder();
+            int idValue = ServletUtils.getURIId(request.getRequestURI());
+            if (idValue == -1) {
+                data = this.service.showAll();
+            } else {
+                data = service.showSingle(idValue);
+            }
 
-        if (request.getParameter("id") == null) {
-            stringBuilder.append(this.service.showAll());
-        } else {
-            int car_id = Integer.parseInt(request.getParameter("id"));
-            stringBuilder.append(service.showSingle(car_id));
-
-            request.setAttribute("delete_id", car_id);
+            out.print(data);
+            out.flush();
+        } catch (Exception exception) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-
-        request.setAttribute("objectName", "Car");
-
-        request.setAttribute("info", stringBuilder);
-
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/views/index.jsp");
-        requestDispatcher.forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        String action = req.getParameter("btn_action");
-        switch (action) {
-            case "Delete": {
-                int delete_id = Integer.parseInt(session.getAttribute("delete_id").toString());
-                this.service.onDelete(delete_id);
-                resp.sendRedirect("/cars");
-                break;
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            case "Add": {
-                String purpose = req.getParameter("purpose");
-                String isReady = req.getParameter("ready");
-                String[] params = new String[]{isReady, purpose};
-                this.service.onAdd(params);
-                resp.sendRedirect("/cars");
-                break;
-            }
-            default: {
-                System.out.println("Not implemented action!");
-            }
+
+            Car car = new ObjectMapper().readValue(requestBody.toString(), Car.class);
+            String carJsonString = this.service.addCar(car);
+
+            out.print(carJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-        session.invalidate();
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        try {
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            this.service.onDelete(id);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
+    }
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String method = req.getMethod();
+        if (method.equals("PATCH")) {
+            doPatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
+
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            Car car = new ObjectMapper().readValue(requestBody.toString(), Car.class);
+            String carJsonString = this.service.updateCar(id, car);
+
+            out.print(carJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
     }
 }

@@ -1,65 +1,93 @@
 package ua.univ.service;
 
-import ua.univ.DAO.AutobaseDAO;
-import ua.univ.models.Car;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import ua.univ.DAO.CarDriverDAO;
 import ua.univ.models.CarDriver;
-import ua.univ.models.Driver;
-import ua.univ.utils.Utils;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CarDriverService {
-    private AutobaseDAO autobaseDAO;
+    private CarDriverDAO carDriverDAO;
 
     public CarDriverService() throws SQLException, ClassNotFoundException {
-        this.autobaseDAO = new AutobaseDAO();
+        this.carDriverDAO = new CarDriverDAO();
     }
 
-    public StringBuilder showAll() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("<h2>Car-Driver relations table</h2>\n");
-
-        CarDriver[] carDriverRelations = this.autobaseDAO.indexCarDriver().toArray(new CarDriver[0]);
-        stringBuilder.append(Utils.getTable(carDriverRelations));
-
-        return stringBuilder;
+    private static String objectToJson(CarDriver data) {
+        try {
+            return new JSONObject(data).toString();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
     }
 
-    public StringBuilder showSingle(int id) {
-        StringBuilder stringBuilder = new StringBuilder();
+    private static String objectsToJson(List<CarDriver> data) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            //Set pretty printing of json
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        CarDriver carDriverRelation = this.autobaseDAO.getCarDriver(id);
-
-        stringBuilder.append(Utils.getSingleModelView(carDriverRelation));
-
-        return stringBuilder;
+            JSONArray array = new JSONArray();
+            for (CarDriver datum : data) {
+                array.put(new JSONObject(datum));
+            }
+            JSONObject jo = new JSONObject();
+            jo.put("carDrivers", array);
+            JSONObject jo2 = new JSONObject();
+            jo2.put("_embedded", jo);
+            return jo2.toString();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
     }
 
-    public void onAdd(String[] params) {
-        Car car = this.autobaseDAO.getCar(Integer.parseInt(params[0]));
-        Driver driver = this.autobaseDAO.getDriver(Integer.parseInt(params[1]));
-        this.autobaseDAO.saveCarDriver(new CarDriver(-1, car, driver));
+    public String showAll() {
+        try {
+            return objectsToJson(this.carDriverDAO.indexCarDriver());
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
+    }
+
+    public String showSingle(int id) {
+        try {
+            return objectToJson(this.carDriverDAO.getCarDriver(id));
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
+    }
+
+    public String addCarDriver(CarDriver carDriver) {
+        this.carDriverDAO.saveCarDriver(carDriver);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            carDriver.setId(this.carDriverDAO.getMaxGlobalId());
+            return mapper.writeValueAsString(carDriver);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String updateCarDriver(int id, CarDriver carDriver) {
+        this.carDriverDAO.updateCarDriver(id, carDriver);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(carDriver);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void onDelete(int id) {
-        this.autobaseDAO.deleteCarDriver(id);
-    }
-
-    public void onUpdate(String[] params) {
-        int id = Integer.getInteger(params[0]);
-        Car car = this.autobaseDAO.getCar(Integer.parseInt(params[1]));
-        Driver driver = this.autobaseDAO.getDriver(Integer.parseInt(params[2]));
-        this.autobaseDAO.updateCarDriver(id, new CarDriver(-1, car, driver));
-    }
-
-    public List<Car> getAllCars() {
-        return this.autobaseDAO.indexCar();
-    }
-
-    public List<Driver> getAllDrivers() {
-        return this.autobaseDAO.indexDriver();
+        this.carDriverDAO.deleteCarDriver(id);
     }
 }

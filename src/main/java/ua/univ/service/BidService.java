@@ -1,82 +1,97 @@
 package ua.univ.service;
 
-import ua.univ.DAO.AutobaseDAO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import ua.univ.DAO.BidDAO;
 import ua.univ.models.Bid;
-import ua.univ.models.Driver;
-import ua.univ.utils.Utils;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class BidService {
 
-    private AutobaseDAO autobaseDAO;
+    private BidDAO bidDAO;
 
     public BidService() throws SQLException, ClassNotFoundException {
-        this.autobaseDAO = new AutobaseDAO();
+        this.bidDAO = new BidDAO();
     }
 
-    public StringBuilder showAll() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("<h2>Bids table</h2>\n");
-
-        Bid[] bids = this.autobaseDAO.indexBid().toArray(new Bid[0]);
-        stringBuilder.append(Utils.getTable(bids));
-
-        return stringBuilder;
+    private static String objectToJson(Bid data) {
+        try {
+            JSONObject joLinks = new JSONObject();
+            joLinks.put("self", new JSONObject().put("href", new JSONObject(data.getDriver())));
+            return new JSONObject(data).toString();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
     }
 
-    public StringBuilder showAll(String name){
-        StringBuilder stringBuilder = new StringBuilder();
+    private static String objectsToJson(List<Bid> data) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            //Set pretty printing of json
+            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-        stringBuilder.append("<h2>Bids table</h2>\n");
+            JSONArray array = new JSONArray();
+            for (Bid datum : data) {
+                array.put(new JSONObject(datum));
+            }
+            JSONObject jo = new JSONObject();
+            jo.put("bids", array);
+            JSONObject jo2 = new JSONObject();
+            jo2.put("_embedded", jo);
 
-        Bid[] bids = this.autobaseDAO.getBidsForDriver(name).toArray(new Bid[0]);
-
-        stringBuilder.append(Utils.getTable(bids));
-
-        return stringBuilder;
+            return jo2.toString();
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
     }
 
-    public StringBuilder showSingle(int id) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        Bid bid = this.autobaseDAO.getBid(id);
-
-        stringBuilder.append(Utils.getSingleModelView(bid));
-
-        return stringBuilder;
+    public String showAll() {
+        try {
+            return objectsToJson(this.bidDAO.indexBid());
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
     }
 
-    public void onAdd(String[] params) {
-        String workPurpose = params[0];
-        Boolean isFinished = Boolean.parseBoolean(params[1]);
-        String driverFeedback = params[2];
-        Driver driver = this.autobaseDAO.getDriver(Integer.parseInt(params[3]));
-        this.autobaseDAO.saveBid(new Bid(-1, workPurpose, isFinished, driverFeedback, driver));
+    public String showSingle(int id) {
+        try {
+            return objectToJson(this.bidDAO.getBid(id));
+        } catch (Exception ex) {
+            System.out.println(ex);
+        }
+        return "";
+    }
+
+    public String addBid(Bid bid) {
+        this.bidDAO.saveBid(bid);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            bid.setId(this.bidDAO.getMaxGlobalId());
+            return mapper.writeValueAsString(bid);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String updateBid(int id, Bid bid) {
+        this.bidDAO.updateBid(id, bid);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.writeValueAsString(bid);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void onDelete(int id) {
-        this.autobaseDAO.deleteBid(id);
-    }
-
-    public List<Driver> getAllDrivers() {
-        return this.autobaseDAO.indexDriver();
-    }
-
-    public Bid getBid(int id){
-        return this.autobaseDAO.getBid(id);
-    }
-
-    public void onUpdate(String[] params){
-        int id = Integer.parseInt(params[0]);
-        String workPurpose = params[1];
-        boolean isFinished = Boolean.parseBoolean(params[2]);
-        String driverFeedback = params[3];
-        Driver driver = this.autobaseDAO.getDriver(Integer.parseInt(params[4]));
-
-        this.autobaseDAO.updateBid(id, new Bid(-1, workPurpose, isFinished, driverFeedback, driver));
+        this.bidDAO.deleteBid(id);
     }
 }

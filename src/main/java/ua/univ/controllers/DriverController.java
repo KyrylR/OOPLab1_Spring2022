@@ -1,20 +1,22 @@
 package ua.univ.controllers;
 
-import ua.univ.service.CarDriverService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import ua.univ.models.Driver;
 import ua.univ.service.DriverService;
-import ua.univ.utils.KeycloakTokenUtil;
+import ua.univ.utils.ServletUtils;
 
-import javax.servlet.RequestDispatcher;
+import javax.annotation.security.RolesAllowed;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 
-@WebServlet("/drivers")
+@WebServlet("/api/drivers/*")
 public class DriverController extends HttpServlet {
     private DriverService service;
 
@@ -28,53 +30,104 @@ public class DriverController extends HttpServlet {
     }
 
     @Override
+//    @RolesAllowed("ROLE_ADMIN")
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            PrintWriter out = response.getWriter();
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            String data = "";
 
-        request.setAttribute("username", KeycloakTokenUtil.getPreferredUsername(request));
-        request.setAttribute("roles", KeycloakTokenUtil.getRoles(request));
+            int idValue = ServletUtils.getURIId(request.getRequestURI());
+            if (idValue == -1) {
+                data = this.service.showAll();
+            } else {
+                data = service.showSingle(idValue);
+            }
 
-        StringBuilder stringBuilder = new StringBuilder();
-
-        if (request.getParameter("id") == null) {
-            stringBuilder.append(this.service.showAll());
-        } else {
-            int driver_id = Integer.parseInt(request.getParameter("id"));
-            stringBuilder.append(service.showSingle(driver_id));
-
-            request.setAttribute("delete_id", driver_id);
+            out.print(data);
+            out.flush();
+        } catch (Exception exception) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-
-        request.setAttribute("objectName", "Driver");
-
-        request.setAttribute("info", stringBuilder);
-        request.setAttribute("action", "None");
-
-        RequestDispatcher requestDispatcher = request.getRequestDispatcher("/views/index.jsp");
-        requestDispatcher.forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        String action = req.getParameter("btn_action");
-        switch (action) {
-            case "Delete": {
-                int delete_id = Integer.parseInt(session.getAttribute("delete_id").toString());
-                this.service.onDelete(delete_id);
-                resp.sendRedirect("/drivers");
-                break;
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            case "Add": {
-                String name = req.getParameter("name");
-                String[] params = new String[]{name};
-                this.service.onAdd(params);
-                resp.sendRedirect("/drivers");
-                break;
-            }
-            default: {
-                System.out.println("Not implemented action!");
-            }
+
+            Driver driver = new ObjectMapper().readValue(requestBody.toString(), Driver.class);
+            String driverJsonString = this.service.addDriver(driver);
+
+            out.print(driverJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
         }
-        session.invalidate();
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+
+        try {
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            this.service.onDelete(id);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
+    }
+
+    @Override
+    protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String method = req.getMethod();
+        if (method.equals("PATCH")) {
+            doPatch(req, resp);
+        } else {
+            super.service(req, resp);
+        }
+    }
+
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            StringBuilder requestBody = new StringBuilder();
+            PrintWriter out = resp.getWriter();
+            resp.setContentType("application/json");
+            resp.setCharacterEncoding("UTF-8");
+
+            try (BufferedReader reader = req.getReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    requestBody.append(line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            int id = ServletUtils.getURIId(req.getRequestURI());
+            Driver driver = new ObjectMapper().readValue(requestBody.toString(), Driver.class);
+            String driverJsonString = this.service.updateDriver(id, driver);
+
+            out.print(driverJsonString);
+            resp.setStatus(200);
+        } catch (Exception exception) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            System.out.println(exception);
+        }
     }
 }

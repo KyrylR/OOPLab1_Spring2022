@@ -11,16 +11,15 @@ public class Bid implements IDefaultModel {
 
     private Driver driver;
 
+    public Bid() {
+    }
+
     public Bid(int id, String workPurpose, boolean isFinished, String driverFeedback, Driver driver) {
         this.id = id;
         this.workPurpose = workPurpose;
         this.isFinished = isFinished;
         this.driverFeedback = driverFeedback;
         this.driver = driver;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getWorkPurpose() {
@@ -39,6 +38,10 @@ public class Bid implements IDefaultModel {
         isFinished = finished;
     }
 
+    public void setIsFinished(boolean finished) {
+        isFinished = finished;
+    }
+
     public String getDriverFeedback() {
         return driverFeedback;
     }
@@ -51,6 +54,10 @@ public class Bid implements IDefaultModel {
         return driver;
     }
 
+    public int getDriverId() {
+        return driver.getId();
+    }
+
     public void setDriver(Driver driver) {
         this.driver = driver;
     }
@@ -60,13 +67,17 @@ public class Bid implements IDefaultModel {
         return this.id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     @Override
-    public String getURLPattern() {
+    public String urlPattern() {
         return "/bids";
     }
 
     @Override
-    public Map<String, String> getMap() {
+    public Map<String, String> createMap() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("Id", String.valueOf(this.id));
         map.put("WorkPurpose", this.workPurpose);

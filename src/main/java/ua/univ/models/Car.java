@@ -8,6 +8,9 @@ public class Car implements IDefaultModel {
     private boolean isReady;
     private String purpose;
 
+    public Car() {
+    }
+
     public Car(int id, boolean isReady, String purpose) {
         this.id = id;
         this.isReady = isReady;
@@ -19,12 +22,12 @@ public class Car implements IDefaultModel {
     }
 
     @Override
-    public String getURLPattern() {
+    public String urlPattern() {
         return "/cars";
     }
 
     @Override
-    public Map<String, String> getMap() {
+    public Map<String, String> createMap() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("Id", String.valueOf(this.id));
         map.put("Ready", String.valueOf(this.isReady));
@@ -41,6 +44,10 @@ public class Car implements IDefaultModel {
     }
 
     public void setReady(boolean ready) {
+        isReady = ready;
+    }
+
+    public void setIsReady(boolean ready) {
         isReady = ready;
     }
 
