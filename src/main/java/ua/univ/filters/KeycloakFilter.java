@@ -1,9 +1,5 @@
 package ua.univ.filters;
 
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.KeycloakSecurityContext;
-import org.keycloak.TokenVerifier;
-import org.keycloak.common.VerificationException;
 import org.keycloak.representations.AccessToken;
 import ua.univ.utils.KeycloakTokenUtil;
 
@@ -11,9 +7,7 @@ import javax.servlet.*;
 import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -21,11 +15,6 @@ import java.util.Set;
 @WebFilter("/api/*")
 public class KeycloakFilter implements Filter {
     private final List<String> requiredRoles = Arrays.asList("ROLE_ADMIN", "ROLE_MANAGER");
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-
-    }
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
@@ -59,8 +48,4 @@ public class KeycloakFilter implements Filter {
         }
     }
 
-    @Override
-    public void destroy() {
-
-    }
 }
