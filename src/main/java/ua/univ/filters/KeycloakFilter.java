@@ -18,7 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-@WebFilter("/api/drivers/*")
+@WebFilter("/api/*")
 public class KeycloakFilter implements Filter {
     private final List<String> requiredRoles = Arrays.asList("ROLE_ADMIN", "ROLE_MANAGER");
 
