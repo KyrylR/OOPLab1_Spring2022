@@ -1,5 +1,6 @@
 package ua.univ.filters;
 
+import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.AccessToken;
 import ua.univ.utils.KeycloakTokenUtil;
 
@@ -10,8 +11,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
+@Slf4j
 @WebFilter("/api/*")
 public class KeycloakFilter implements Filter {
     private final List<String> requiredRoles = Arrays.asList("ROLE_ADMIN", "ROLE_MANAGER");
@@ -27,7 +30,7 @@ public class KeycloakFilter implements Filter {
         } else {
             try {
                 AccessToken accessToken = KeycloakTokenUtil.getToken(request, request.getHeader("Authorization"));
-                Set<String> roles = KeycloakTokenUtil.getRoles(accessToken);
+                Set<String> roles = KeycloakTokenUtil.getRoles(Objects.requireNonNull(accessToken));
                 for (String item: roles) {
                     if (requiredRoles.contains(item)) {
                         hasRequiredRole = true;
@@ -35,7 +38,7 @@ public class KeycloakFilter implements Filter {
                     }
                 }
             } catch (Exception ex) {
-                System.out.println(ex);
+                log.error(ex.getMessage());
                 response.setStatus(401);
                 return;
             }

@@ -1,8 +1,16 @@
 package ua.univ.models;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
+@Getter
+@Setter
+@NoArgsConstructor
 public class Bid implements IDefaultModel {
     private int id;
     private String workPurpose;
@@ -11,8 +19,10 @@ public class Bid implements IDefaultModel {
 
     private Driver driver;
 
-    public Bid() {
+    public int getDriverId() {
+        return driver.getId();
     }
+
 
     public Bid(int id, String workPurpose, boolean isFinished, String driverFeedback, Driver driver) {
         this.id = id;
@@ -22,54 +32,11 @@ public class Bid implements IDefaultModel {
         this.driver = driver;
     }
 
-    public String getWorkPurpose() {
-        return workPurpose;
-    }
-
-    public void setWorkPurpose(String workPurpose) {
-        this.workPurpose = workPurpose;
-    }
-
-    public boolean isFinished() {
-        return isFinished;
-    }
-
-    public void setFinished(boolean finished) {
-        isFinished = finished;
-    }
-
-    public void setIsFinished(boolean finished) {
-        isFinished = finished;
-    }
-
-    public String getDriverFeedback() {
-        return driverFeedback;
-    }
-
-    public void setDriverFeedback(String driverFeedback) {
-        this.driverFeedback = driverFeedback;
-    }
-
-    public Driver getDriver() {
-        return driver;
-    }
-
-    public int getDriverId() {
-        return driver.getId();
-    }
-
-    public void setDriver(Driver driver) {
-        this.driver = driver;
-    }
-
     @Override
     public int getId() {
         return this.id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
 
     @Override
     public String urlPattern() {

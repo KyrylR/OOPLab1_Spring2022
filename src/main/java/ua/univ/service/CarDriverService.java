@@ -2,92 +2,105 @@ package ua.univ.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import ua.univ.DAO.CarDriverDAO;
+import ua.univ.converters.CarDriverConverter;
+import ua.univ.dao.CarDriverDAO;
+import ua.univ.dto.CarDriverDTO;
 import ua.univ.models.CarDriver;
 
 import java.sql.SQLException;
 import java.util.List;
 
-public class CarDriverService {
-    private CarDriverDAO carDriverDAO;
+@Slf4j
+public class CarDriverService implements ItemService {
+    private final CarDriverDAO carDriverDAO;
 
-    public CarDriverService() throws SQLException, ClassNotFoundException {
+    private final CarDriverConverter carDriverConverter;
+
+    public CarDriverService() throws SQLException {
         this.carDriverDAO = new CarDriverDAO();
+        this.carDriverConverter = new CarDriverConverter();
     }
 
-    private static String objectToJson(CarDriver data) {
+    private static String objectToJson(CarDriver data) throws JSONException {
         try {
             return new JSONObject(data).toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    private static String objectsToJson(List<CarDriver> data) {
+    private static String objectsToJson(List<CarDriver> data) throws JSONException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            //Set pretty printing of json
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
             JSONArray array = new JSONArray();
             for (CarDriver datum : data) {
                 array.put(new JSONObject(datum));
             }
-            JSONObject jo = new JSONObject();
-            jo.put("carDrivers", array);
-            JSONObject jo2 = new JSONObject();
-            jo2.put("_embedded", jo);
-            return jo2.toString();
+            return array.toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showAll() {
+    public String showAll() throws SQLException {
         try {
             return objectsToJson(this.carDriverDAO.indexCarDriver());
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showSingle(int id) {
+    public String showSingle(int id) throws SQLException {
         try {
             return objectToJson(this.carDriverDAO.getCarDriver(id));
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String addCarDriver(CarDriver carDriver) {
-        this.carDriverDAO.saveCarDriver(carDriver);
-        ObjectMapper mapper = new ObjectMapper();
+    public String addItem(StringBuilder requestBody) throws SQLException {
         try {
-            carDriver.setId(this.carDriverDAO.getMaxGlobalId());
+            ObjectMapper mapper = new ObjectMapper();
+            CarDriverDTO carDriverDTO = mapper.readValue(requestBody.toString(), CarDriverDTO.class);
+            CarDriver carDriver = carDriverConverter.convertToEntity(carDriverDTO);
+            int newId = this.carDriverDAO.saveCarDriver(carDriver);
+
+            if (newId == -1) {
+                String reason = "Can not save the car-driver!";
+                log.error(reason);
+                throw new SQLException(reason);
+            }
+
+            carDriver.setId(newId);
             return mapper.writeValueAsString(carDriver);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e);
         }
     }
 
-    public String updateCarDriver(int id, CarDriver carDriver) {
-        this.carDriverDAO.updateCarDriver(id, carDriver);
-        ObjectMapper mapper = new ObjectMapper();
+    public String updateItem(int id, StringBuilder requestBody) throws SQLException {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            CarDriverDTO carDriverDTO = mapper.readValue(requestBody.toString(), CarDriverDTO.class);
+            CarDriver carDriver = carDriverConverter.convertToEntity(carDriverDTO);
+            this.carDriverDAO.updateCarDriver(id, carDriver);
+
             return mapper.writeValueAsString(carDriver);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e);
         }
     }
 
-    public void onDelete(int id) {
+    public void onDelete(int id) throws SQLException {
         this.carDriverDAO.deleteCarDriver(id);
     }
 }

@@ -2,97 +2,92 @@ package ua.univ.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import ua.univ.DAO.CarDAO;
+import ua.univ.dao.CarDAO;
 import ua.univ.models.Car;
-import ua.univ.models.Driver;
-import ua.univ.utils.Utils;
 
 import java.sql.SQLException;
 import java.util.List;
 
-public class CarService {
+@Slf4j
+public class CarService implements ItemService {
 
-    private CarDAO carDAO;
+    private final CarDAO carDAO;
 
-    public CarService() throws SQLException, ClassNotFoundException {
+    public CarService() throws SQLException {
         this.carDAO = new CarDAO();
     }
 
-    private static String objectToJson(Car data) {
+    private static String objectToJson(Car data) throws JSONException {
         try {
-            JSONObject joLinks = new JSONObject();
-            joLinks.put("self", new JSONObject().put("href", new JSONObject(new Car(data.getId(), data.isReady(), data.getPurpose()))));
             return new JSONObject(data).toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    private static String objectsToJson(List<Car> data) {
+    private static String objectsToJson(List<Car> data) throws JSONException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            //Set pretty printing of json
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
             JSONArray array = new JSONArray();
             for (Car datum : data) {
                 array.put(new JSONObject(datum));
             }
-            JSONObject jo = new JSONObject();
-            jo.put("cars", array);
-            JSONObject jo2 = new JSONObject();
-            jo2.put("_embedded", jo);
-            return jo2.toString();
+            return array.toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showAll() {
+    public String showAll() throws SQLException {
         try {
             return objectsToJson(this.carDAO.indexCar());
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showSingle(int id) {
+    public String showSingle(int id) throws SQLException {
         try {
             return objectToJson(this.carDAO.getCar(id));
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String addCar(Car car) {
-        this.carDAO.saveCar(car);
-        ObjectMapper mapper = new ObjectMapper();
+    public String addItem(StringBuilder requestBody) throws SQLException {
         try {
-            car.setId(this.carDAO.getMaxGlobalId());
+            ObjectMapper mapper = new ObjectMapper();
+            Car car = mapper.readValue(requestBody.toString(), Car.class);
+            int newId = this.carDAO.saveCar(car);
+
+            car.setId(newId);
             return mapper.writeValueAsString(car);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public String updateCar(int id, Car car) {
-        this.carDAO.updateCar(id, car);
-        ObjectMapper mapper = new ObjectMapper();
+    public String updateItem(int id, StringBuilder requestBody) throws SQLException {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            Car car = mapper.readValue(requestBody.toString(), Car.class);
+            this.carDAO.updateCar(id, car);
             return mapper.writeValueAsString(car);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public void onDelete(int id) {
+    public void onDelete(int id) throws SQLException {
         this.carDAO.deleteCar(id);
     }
 }

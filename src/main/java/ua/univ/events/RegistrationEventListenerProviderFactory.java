@@ -14,17 +14,17 @@ public class RegistrationEventListenerProviderFactory implements EventListenerPr
 
     @Override
     public void init(Config.Scope scope) {
-
+        // Do nothing
     }
 
     @Override
     public void postInit(KeycloakSessionFactory keycloakSessionFactory) {
-
+        // Do nothing
     }
 
     @Override
     public void close() {
-
+        // Do nothing
     }
 
     @Override

@@ -2,95 +2,97 @@ package ua.univ.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import ua.univ.DAO.DriverDAO;
-import ua.univ.models.Car;
+import ua.univ.dao.DriverDAO;
 import ua.univ.models.Driver;
 
 import java.sql.SQLException;
 import java.util.List;
 
-public class DriverService {
-    private DriverDAO driverDAO;
+@Slf4j
+public class DriverService implements ItemService {
+    private final DriverDAO driverDAO;
 
-    public DriverService() throws SQLException, ClassNotFoundException {
+    public DriverService() throws SQLException {
         this.driverDAO = new DriverDAO();
     }
 
     private static String objectToJson(Driver data) {
         try {
-            JSONObject joLinks = new JSONObject();
-            joLinks.put("self", new JSONObject().put("href", new JSONObject(new Driver(data.getId(), data.getName()))));
             return new JSONObject(data).toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
     private static String objectsToJson(List<Driver> data) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            //Set pretty printing of json
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
             JSONArray array = new JSONArray();
             for (Driver datum : data) {
                 array.put(new JSONObject(datum));
             }
-            JSONObject jo = new JSONObject();
-            jo.put("drivers", array);
-            JSONObject jo2 = new JSONObject();
-            jo2.put("_embedded", jo);
-            return jo2.toString();
+            return array.toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showAll() {
+    public String showAll() throws SQLException {
         try {
             return objectsToJson(this.driverDAO.indexDriver());
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showSingle(int id) {
+    public String showSingle(int id) throws SQLException {
         try {
             return objectToJson(this.driverDAO.getDriver(id));
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String addDriver(Driver driver) {
-        this.driverDAO.saveDriver(driver);
-        ObjectMapper mapper = new ObjectMapper();
+    public String addItem(StringBuilder requestBody) throws SQLException {
         try {
-            driver.setId(this.driverDAO.getMaxGlobalId());
+            ObjectMapper mapper = new ObjectMapper();
+            Driver driver = mapper.readValue(requestBody.toString(), Driver.class);
+            int newId = this.driverDAO.saveDriver(driver);
+
+            if (newId == -1) {
+                log.error("Can not save the bid!");
+                throw new SQLException("Can not save the bid!");
+            }
+
+            driver.setId(newId);
             return mapper.writeValueAsString(driver);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public String updateDriver(int id, Driver driver) {
-        this.driverDAO.updateDriver(id, driver);
-        ObjectMapper mapper = new ObjectMapper();
+    public String updateItem(int id, StringBuilder requestBody) throws SQLException {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            Driver driver = mapper.readValue(requestBody.toString(), Driver.class);
+            this.driverDAO.updateDriver(id, driver);
+
             return mapper.writeValueAsString(driver);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public void onDelete(int id) {
+    public void onDelete(int id) throws SQLException {
         this.driverDAO.deleteDriver(id);
     }
 }

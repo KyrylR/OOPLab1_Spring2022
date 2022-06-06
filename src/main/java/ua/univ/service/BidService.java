@@ -2,96 +2,105 @@ package ua.univ.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-import ua.univ.DAO.BidDAO;
+import ua.univ.converters.BidConverter;
+import ua.univ.dao.BidDAO;
+import ua.univ.dto.BidDTO;
 import ua.univ.models.Bid;
 
 import java.sql.SQLException;
 import java.util.List;
 
-public class BidService {
+@Slf4j
+public class BidService implements ItemService {
+    private final BidDAO bidDAO;
 
-    private BidDAO bidDAO;
+    private final BidConverter bidConverter;
 
-    public BidService() throws SQLException, ClassNotFoundException {
+    public BidService() throws SQLException {
         this.bidDAO = new BidDAO();
+        this.bidConverter = new BidConverter();
     }
 
-    private static String objectToJson(Bid data) {
+    private static String objectToJson(Bid data) throws JSONException {
         try {
-            JSONObject joLinks = new JSONObject();
-            joLinks.put("self", new JSONObject().put("href", new JSONObject(data.getDriver())));
             return new JSONObject(data).toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    private static String objectsToJson(List<Bid> data) {
+    private static String objectsToJson(List<Bid> data) throws JSONException {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            //Set pretty printing of json
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-
             JSONArray array = new JSONArray();
             for (Bid datum : data) {
                 array.put(new JSONObject(datum));
             }
-            JSONObject jo = new JSONObject();
-            jo.put("bids", array);
-            JSONObject jo2 = new JSONObject();
-            jo2.put("_embedded", jo);
-
-            return jo2.toString();
+            return array.toString();
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new JSONException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showAll() {
+    public String showAll() throws SQLException {
         try {
             return objectsToJson(this.bidDAO.indexBid());
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String showSingle(int id) {
+    public String showSingle(int id) throws SQLException {
         try {
             return objectToJson(this.bidDAO.getBid(id));
         } catch (Exception ex) {
-            System.out.println(ex);
+            log.error(ex.getMessage());
+            throw new SQLException(ex.getMessage());
         }
-        return "";
     }
 
-    public String addBid(Bid bid) {
-        this.bidDAO.saveBid(bid);
-        ObjectMapper mapper = new ObjectMapper();
+    public String addItem(StringBuilder requestBody) throws SQLException {
         try {
-            bid.setId(this.bidDAO.getMaxGlobalId());
+            ObjectMapper mapper = new ObjectMapper();
+            BidDTO bidDTO = mapper.readValue(requestBody.toString(), BidDTO.class);
+            Bid bid = bidConverter.convertToEntity(bidDTO);
+
+            int newId = this.bidDAO.saveBid(bid);
+
+            if (newId == -1) {
+                String reason = "Can not save the bid!";
+                log.error(reason);
+                throw new SQLException(reason);
+            }
+
+            bid.setId(newId);
             return mapper.writeValueAsString(bid);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public String updateBid(int id, Bid bid) {
-        this.bidDAO.updateBid(id, bid);
-        ObjectMapper mapper = new ObjectMapper();
+    public String updateItem(int id, StringBuilder requestBody) throws SQLException {
         try {
+            ObjectMapper mapper = new ObjectMapper();
+            BidDTO bidDTO = mapper.readValue(requestBody.toString(), BidDTO.class);
+            Bid bid = bidConverter.convertToEntity(bidDTO);
+            this.bidDAO.updateBid(id, bid);
             return mapper.writeValueAsString(bid);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new JSONException(e.getMessage());
         }
     }
 
-    public void onDelete(int id) {
+    public void onDelete(int id) throws SQLException {
         this.bidDAO.deleteBid(id);
     }
 }

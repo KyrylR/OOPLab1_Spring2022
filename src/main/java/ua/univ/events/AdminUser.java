@@ -5,6 +5,7 @@ import org.keycloak.models.GroupModel;
 import org.keycloak.models.RoleModel;
 import org.keycloak.models.UserModel;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,7 +24,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setUsername(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -33,7 +34,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setCreatedTimestamp(Long aLong) {
-
+        // Do nothing
     }
 
     @Override
@@ -43,22 +44,22 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setEnabled(boolean b) {
-
+        // Do nothing
     }
 
     @Override
     public void setSingleAttribute(String s, String s1) {
-
+        // Do nothing
     }
 
     @Override
     public void setAttribute(String s, List<String> list) {
-
+        // Do nothing
     }
 
     @Override
     public void removeAttribute(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -68,37 +69,37 @@ public class AdminUser implements UserModel {
 
     @Override
     public List<String> getAttribute(String s) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public Map<String, List<String>> getAttributes() {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
     public Set<String> getRequiredActions() {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
     public void addRequiredAction(String s) {
-
+        // Do nothing
     }
 
     @Override
     public void removeRequiredAction(String s) {
-
+        // Do nothing
     }
 
     @Override
     public void addRequiredAction(RequiredAction requiredAction) {
-
+        // Do nothing
     }
 
     @Override
     public void removeRequiredAction(RequiredAction requiredAction) {
-
+        // Do nothing
     }
 
     @Override
@@ -108,7 +109,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setFirstName(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -118,7 +119,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setLastName(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -128,7 +129,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setEmail(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -138,22 +139,22 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setEmailVerified(boolean b) {
-
+        // Do nothing
     }
 
     @Override
     public Set<GroupModel> getGroups() {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
     public void joinGroup(GroupModel groupModel) {
-
+        // Do nothing
     }
 
     @Override
     public void leaveGroup(GroupModel groupModel) {
-
+        // Do nothing
     }
 
     @Override
@@ -168,7 +169,7 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setFederationLink(String s) {
-
+        // Do nothing
     }
 
     @Override
@@ -178,17 +179,17 @@ public class AdminUser implements UserModel {
 
     @Override
     public void setServiceAccountClientLink(String s) {
-
+        // Do nothing
     }
 
     @Override
     public Set<RoleModel> getRealmRoleMappings() {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
     public Set<RoleModel> getClientRoleMappings(ClientModel clientModel) {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
@@ -198,16 +199,16 @@ public class AdminUser implements UserModel {
 
     @Override
     public void grantRole(RoleModel roleModel) {
-
+        // Do nothing
     }
 
     @Override
     public Set<RoleModel> getRoleMappings() {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override
     public void deleteRoleMapping(RoleModel roleModel) {
-
+        // Do nothing
     }
 }

@@ -1,15 +1,19 @@
 package ua.univ.models;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class Car implements IDefaultModel {
     private int id;
     private boolean isReady;
     private String purpose;
-
-    public Car() {
-    }
 
     public Car(int id, boolean isReady, String purpose) {
         this.id = id;
@@ -19,6 +23,10 @@ public class Car implements IDefaultModel {
 
     public int getId() {
         return id;
+    }
+
+    public void setReady(boolean ready) {
+        this.isReady = ready;
     }
 
     @Override
@@ -33,30 +41,6 @@ public class Car implements IDefaultModel {
         map.put("Ready", String.valueOf(this.isReady));
         map.put("Purpose", this.purpose);
         return map;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public boolean isReady() {
-        return isReady;
-    }
-
-    public void setReady(boolean ready) {
-        isReady = ready;
-    }
-
-    public void setIsReady(boolean ready) {
-        isReady = ready;
-    }
-
-    public String getPurpose() {
-        return purpose;
-    }
-
-    public void setPurpose(String purpose) {
-        this.purpose = purpose;
     }
 
     @Override

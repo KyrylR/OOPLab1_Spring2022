@@ -1,15 +1,19 @@
 package ua.univ.models;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class CarDriver implements IDefaultModel{
+@Getter
+@Setter
+@NoArgsConstructor
+public class CarDriver implements IDefaultModel {
     private int id;
     private Car car;
     private Driver driver;
-
-    public CarDriver() {
-    }
 
     public CarDriver(int id, Car car, Driver driver) {
         this.id = id;
@@ -17,32 +21,12 @@ public class CarDriver implements IDefaultModel{
         this.driver = driver;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public Car getCar() {
-        return car;
-    }
-
-    public int getCarId() {
-        return car.getId();
-    }
-
-    public void setCar(Car car) {
-        this.car = car;
-    }
-
-    public Driver getDriver() {
-        return driver;
-    }
-
     public int getDriverId() {
         return driver.getId();
     }
 
-    public void setDriver(Driver driver) {
-        this.driver = driver;
+    public int getCarId() {
+        return car.getId();
     }
 
     @Override

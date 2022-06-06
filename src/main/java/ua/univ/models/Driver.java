@@ -1,26 +1,22 @@
 package ua.univ.models;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Getter
+@Setter
+@NoArgsConstructor
 public class Driver implements IDefaultModel {
     private int id;
     private String name;
 
-    public Driver() {
-    }
-
     public Driver(int id, String name) {
         this.id = id;
         this.name = name;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     @Override
@@ -34,14 +30,6 @@ public class Driver implements IDefaultModel {
         map.put("Id", String.valueOf(this.id));
         map.put("Name", this.name);
         return map;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override

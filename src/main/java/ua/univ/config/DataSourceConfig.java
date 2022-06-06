@@ -1,21 +1,26 @@
 package ua.univ.config;
 
+import lombok.extern.slf4j.Slf4j;
+import ua.univ.utils.PropertiesUtil;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * Database connectivity
+ */
+@Slf4j
 public class DataSourceConfig {
-    /*  Database credentials */
-    static final String DB_URL = "jdbc:postgresql://localhost:5432/Autobase";
-    static final String USER = "postgres";
-    static final String PASS = "password";
+    private static final String DB_URL = PropertiesUtil.getProperty("db.url");
+    private static final String USER = PropertiesUtil.getProperty("db.user");
+    private static final String PASS = PropertiesUtil.getProperty("db.password");
 
     public Connection getConnection() throws SQLException {
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {
-            System.out.println("PostgreSQL JDBC Driver is not found. Include it in your library path ");
-            e.printStackTrace();
+            log.error("PostgreSQL JDBC Driver is not found. Include it in your library path.");
             return null;
         }
 
