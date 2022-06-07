@@ -4,14 +4,4 @@
 
 <web-app>
     <display-name>Archetype Created Web Application for Lab1 OOP Spring 2022</display-name>
-
-    <filter>
-        <filter-name>CorsFilter</filter-name>
-        <filter-class>ua.univ.filters.CorsFilter</filter-class>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>CorsFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
 </web-app>
